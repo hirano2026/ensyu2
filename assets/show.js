@@ -8,7 +8,11 @@ function getUserID() {
 
 // ユーザー情報を取得
 async function fetchUser(APIurl){
-    const response = await fetch(APIurl);
+    const response = await fetch(APIurl,{
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+        }
+    });
     if (response.status === 404) {
         throw new Error("エラー：ユーザー情報の取得に失敗しました")
     }
@@ -63,7 +67,10 @@ async function deleteUser(APIurl) {
     const response = await fetch(
         APIurl,
         {
-            method: "DELETE"
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+            }
         }
     );
 

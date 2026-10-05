@@ -1,7 +1,40 @@
 // APIからユーザー一覧を取得
+
+const hash = new URLSearchParams(
+    window.location.hash.substring(1)
+);
+
+const accessTokenUrl = hash.get("access_token");
+
+let accessToken;
+
+if (accessTokenUrl) {
+    localStorage.setItem("accessToken", accessTokenUrl);
+
+    accessToken = accessTokenUrl;
+
+    history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+    );
+} else {
+    accessToken = localStorage.getItem("accessToken");
+}
+
+if (!accessToken) {
+    console.error("アクセストークンを取得できませんでした")
+} else {
+    fetchUsers();
+}
+
 async function fetchUsers() {
     try {
-        const response = await fetch(`${window.APP_CONFIG.API_URL}users`);
+        const response = await fetch(`${window.APP_CONFIG.API_URL}users`,{
+            headers: {
+                "Authorization": `Bearer ${accessToken}`
+            }
+        });
 
         if (!response.ok) {
             throw new Error("一覧情報の取得に失敗しました");
@@ -32,4 +65,3 @@ function displayUsers(users) {
     }
 }
 
-fetchUsers();

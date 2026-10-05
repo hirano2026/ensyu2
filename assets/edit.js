@@ -7,7 +7,11 @@ function getUserID() {
 
 // ユーザー情報を取得
 async function fetchUser(APIurl){
-    const response = await fetch(APIurl);
+    const response = await fetch(APIurl,{
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+        }
+    });
 
     if (!response.ok) {
         throw new Error("ユーザー情報の取得に失敗しました");
@@ -63,7 +67,8 @@ async function updateUser(APIurl, requestBody) {
         {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
             },
             body: JSON.stringify(requestBody)
         }
