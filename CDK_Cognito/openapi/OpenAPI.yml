@@ -1,0 +1,429 @@
+#（必須） OpenAPIのバージョン情報
+openapi: "3.0.3"
+
+#（必須） APIの基本情報を記述：タイトル、説明（省略可）、バージョン
+info:
+  title: "ensyu1 API"
+  description: AWS簡易Webアプリケーション開発のAPI
+  version: "1.0"
+
+# APIを提供するサーバーを環境ごとに記述
+servers:
+  - url: https://api.server.test/v1
+
+#（必須） 各エンドポイントとHTTPメソッドを定義
+paths:
+  "/users":
+    get: # GETのときはparametersとresponsesを記述する
+      summary: ユーザーの一覧表示        
+      responses: # APIが返す結果の定義
+        "200": # リクエストが正常に処理できた
+          description: 正常にユーザーの一覧を取得
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userID:
+                      type: string
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    phone:
+                      type: string
+                    birth:
+                      type: string
+                      format: data
+
+        "400": # 一般的なクライアントエラー
+          description: クライアントエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        "401": # アクセス権がない、または認証に失敗
+          description: アクセス権がない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        
+        "403": # 閲覧権限がない
+          description: 閲覧権限がない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        
+
+        # "404": # Webページが見つからない
+        #   description: ページ見つからない
+        #   content:
+        #     application/json:
+        #       schema:
+        #         type: object
+        #         properties:
+        #           message:
+        #             type: string
+
+        "500": # 何らかのサーバ内で起きたエラー
+          description: サーバー側
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        "503": # 一時的にサーバーにアクセスができない
+          description: 一時的
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+    post:
+      summary: "ユーザーの新規登録"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                birth:
+                  type: string
+                  format: data
+              required:
+                - name
+                - email
+                - birth
+                
+      responses: # APIが返す結果の定義
+        "201": # リクエストが正常に処理できた
+          description: 正常にユーザーを登録
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        "400": # 一般的なクライアントエラー
+          description: クライアントエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "401": # アクセス権がない、または認証に失敗
+          description: アクセス権がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        
+        "403": # 閲覧権限がない
+          description: 閲覧権限がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404": # Webページが見つからない
+          description: ページ見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500": # 何らかのサーバ内で起きたエラー
+          description: サーバー側
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "503": # 一時的にサーバーにアクセスができない
+          description: 一時的
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    options:
+      responses:
+        "204":
+          description: CORS
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+
+  "/users/{userID}":
+    get:
+      summary: ユーザーの詳細情報取得
+      parameters:
+        - name: userID # パラメータの名前が入る
+          in: path # pathかquery
+          description: 取得したい情報
+          required: true 
+          schema:
+            type: string 
+      responses: 
+        "200": 
+          description: 正常にユーザーの詳細情報を取得
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  userID:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  birth:
+                    type: string
+                    format: data
+
+        "400": # 一般的なクライアントエラー
+          description: クライアントエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "401": # アクセス権がない、または認証に失敗
+          description: アクセス権がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        
+        "403": # 閲覧権限がない
+          description: 閲覧権限がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404": # Webページが見つからない
+          description: ページ見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500": # 何らかのサーバ内で起きたエラー
+          description: サーバー側
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "503": # 一時的にサーバーにアクセスができない
+          description: 一時的
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    
+
+    put:
+      summary: "ユーザーの更新"
+      parameters:
+        - name: userID # パラメータの名前が入る
+          in: path # pathかquery
+          description: 情報を更新するユーザーのID
+          required: true 
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                birth:
+                  type: string
+                  format: data
+              required:
+                - name
+                - email
+                - birth
+      responses: 
+        "201": 
+          description: ユーザーの更新を正常に処理
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        "400": # 一般的なクライアントエラー
+          description: クライアントエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "401": # アクセス権がない、または認証に失敗
+          description: アクセス権がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        
+        "403": # 閲覧権限がない
+          description: 閲覧権限がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404": # Webページが見つからない
+          description: ページ見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500": # 何らかのサーバ内で起きたエラー
+          description: サーバー側
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "503": # 一時的にサーバーにアクセスができない
+          description: 一時的
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: "ユーザーの削除"
+      parameters:
+        - name: userID
+          in: path
+          description: 削除するユーザーのID
+          required: true
+          schema:
+            type: string
+      responses: 
+        "204": 
+          description: ユーザーの削除を正常に処理
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        "400": # 一般的なクライアントエラー
+          description: クライアントエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "401": # アクセス権がない、または認証に失敗
+          description: アクセス権がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        
+        "403": # 閲覧権限がない
+          description: 閲覧権限がない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "404": # Webページが見つからない
+          description: ページ見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "500": # 何らかのサーバ内で起きたエラー
+          description: サーバー側
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+        "503": # 一時的にサーバーにアクセスができない
+          description: 一時的
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    options:
+      responses:
+        "204":
+          description: CORS
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string

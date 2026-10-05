@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
-import { CdkCognitoStack } from '../lib/cdk_cognito-stack';
+import { MainStack } from '../lib/stack/cdk_cognito-stack';
 
 const app = new cdk.App();
-new CdkCognitoStack(app, 'CdkCognitoStack', {
+new MainStack(app, 'ensyu2-Stack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
@@ -14,7 +14,7 @@ new CdkCognitoStack(app, 'CdkCognitoStack', {
 
   /* Uncomment the next line if you know exactly what Account and Region you
    * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+  env: { account: '199167114365', region: 'ap-northeast-1' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
