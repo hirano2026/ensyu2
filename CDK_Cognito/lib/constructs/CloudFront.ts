@@ -43,15 +43,7 @@ export class CloudFrontConstruct extends Construct {
                 defaultCacheBehavior: { //pathを指定しない場合に必要になるデフォルトの設定
                     targetOriginId: "S3Origin",
                     viewerProtocolPolicy: "redirect-to-https",
-                    // allowedMethods: [
-                    //     "GET",
-                    //     "HEAD",
-                    // ],
-                    // cachedMethods: [
-                    //     "GET",
-                    //     "HEAD",
-                    // ],
-                    // compress: true,
+                    compress: true,
                     cachePolicyId: cloudfront.CachePolicy.CACHING_OPTIMIZED.cachePolicyId,
                 },
             },
