@@ -2,13 +2,13 @@ import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as s3 from "aws-cdk-lib/aws-s3";
+import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 
 import { lambdaConfig } from "../../config/Dev"
 
 interface LambdaFunctionsProps {
     table: dynamodb.Table;
-    bucket: s3.Bucket;
+    distribution: cloudfront.CfnDistribution;
 }
 
 export class LambdaFunctions extends Construct {
@@ -30,7 +30,7 @@ export class LambdaFunctions extends Construct {
 
             environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
                 TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: props.bucket.bucketWebsiteUrl,
+                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
             },
         });
 
@@ -41,7 +41,7 @@ export class LambdaFunctions extends Construct {
 
             environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
                 TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: props.bucket.bucketWebsiteUrl,
+                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
             },
         });
 
@@ -52,7 +52,7 @@ export class LambdaFunctions extends Construct {
 
             environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
                 TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: props.bucket.bucketWebsiteUrl,
+                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
             },
         });
 
@@ -63,7 +63,7 @@ export class LambdaFunctions extends Construct {
 
             environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
                 TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: props.bucket.bucketWebsiteUrl,
+                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
             },
         });
 
@@ -74,7 +74,7 @@ export class LambdaFunctions extends Construct {
 
             environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
                 TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: props.bucket.bucketWebsiteUrl,
+                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
             },
         });
 

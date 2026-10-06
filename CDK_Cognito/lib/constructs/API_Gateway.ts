@@ -45,7 +45,7 @@ export class APIGatewayConstruct extends Construct {
             
             restApiProps: {
                 policy: apiPolicy,  
-                restApiName: "ensyu1API",   
+                restApiName: "ensyu2-API",   
                 deployOptions: {
                     stageName: "test",
                 },
@@ -55,7 +55,7 @@ export class APIGatewayConstruct extends Construct {
                     get: new openapix.LambdaIntegration(this, props.lambdas.indexUser),
                     post: new openapix.LambdaIntegration(this, props.lambdas.newUser),
                     options: new openapix.CorsIntegration(this, {
-                        headers: "Content-Type",
+                        headers: "Content-Type,Authorization",
                         origins: props.websiteUrl,
                         methods: "GET,POST,OPTIONS",
                     }),
@@ -65,7 +65,7 @@ export class APIGatewayConstruct extends Construct {
                     put: new openapix.LambdaIntegration(this, props.lambdas.editUser),
                     delete: new openapix.LambdaIntegration(this, props.lambdas.deleteUser),
                     options: new openapix.CorsIntegration(this, {
-                        headers: "Content-Type",
+                        headers: "Content-Type,Authorization",
                         origins: props.websiteUrl,
                         methods: "GET,PUT,DELETE,OPTIONS",
                     }),

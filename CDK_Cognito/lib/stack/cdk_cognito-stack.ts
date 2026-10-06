@@ -7,8 +7,8 @@ import { CdkDynamoDbConstruct } from "../constructs/DynamoDB";
 import { CdkS3Construct } from "../constructs/S3";
 import { LambdaFunctions } from "../constructs/Lambda";
 import { APIGatewayConstruct } from "../constructs/API_Gateway";
-// import { CloudFront } from "../constructs/CloudFront";
-// import { Cognito } from "../constructs/Cognito";めいめい
+import { CloudFrontConstruct } from "../constructs/CloudFront";
+// import { Cognito } from "../constructs/Cognito";
 
 export class MainStack extends cdk.Stack {
 
@@ -26,9 +26,18 @@ export class MainStack extends cdk.Stack {
     );
 
     // S3 Construct
-    const website = new CdkS3Construct(
+    const S3 = new CdkS3Construct(
       this,
       "S3"
+    );
+
+    // CloudFront Construct
+    const cloudfront = new CloudFrontConstruct(
+      this,
+      "CloudFront",
+      {
+        bucket: S3.bucket,
+      }
     );
 
     // Lambda Construct
@@ -37,7 +46,7 @@ export class MainStack extends cdk.Stack {
       "Lambda",
       {
         table: database.usersTable,
-        bucket: website.bucket,
+        distribution: cloudfront.distribution,
       }
     );
 
@@ -46,7 +55,7 @@ export class MainStack extends cdk.Stack {
       this,
       "APIGateway",
       {
-        websiteUrl: website.bucket.bucketWebsiteUrl,
+        websiteUrl: "https://" + cloudfront.distribution.attrDomainName,
         lambdas: {
           indexUser: lambdaFunctions.indexUser,
           showUser: lambdaFunctions.showUser,
@@ -66,7 +75,7 @@ export class MainStack extends cdk.Stack {
               `window.APP_CONFIG = {API_URL: "${apiGateway.apiUrl}"};`
             ),
         ],
-        destinationBucket: website.bucket,
+        destinationBucket: S3.bucket,
     });
   }
 }
