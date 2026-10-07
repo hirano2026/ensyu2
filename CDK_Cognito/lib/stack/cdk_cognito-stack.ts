@@ -7,6 +7,7 @@ import { CdkDynamoDbConstruct } from "../constructs/DynamoDB";
 import { CdkS3Construct } from "../constructs/S3";
 import { LambdaFunctions } from "../constructs/Lambda";
 import { APIGatewayConstruct } from "../constructs/API_Gateway";
+import { CognitoConstruct } from "../constructs/Cognito"
 import { CloudFrontConstruct } from "../constructs/CloudFront";
 // import { Cognito } from "../constructs/Cognito";
 
@@ -40,6 +41,15 @@ export class MainStack extends cdk.Stack {
       }
     );
 
+    // Cognito Construct
+    const cognito = new CognitoConstruct(
+      this,
+      "Cognito",
+      {
+        distribution: cloudfront.distribution,
+      }
+    );
+
     // Lambda Construct
     const lambdaFunctions = new LambdaFunctions(
       this,
@@ -63,6 +73,7 @@ export class MainStack extends cdk.Stack {
           editUser: lambdaFunctions.editUser,
           deleteUser: lambdaFunctions.deleteUser,
         },
+        userPool: cognito.userPool
       }
     );
 

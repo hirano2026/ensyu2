@@ -7,13 +7,16 @@ interface CognitoProps {
 }
 
 export class CognitoConstruct extends Construct {
+
+    public readonly userPool: cognito.CfnUserPool;
+
     constructor(scope: Construct, id: string, props: CognitoProps) {
         super(scope, id);
         // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPool.html
-        const userPool = new cognito.CfnUserPool(this, 'ensyu2-user-pool', {
+        this.userPool = new cognito.CfnUserPool(this, 'ensyu2-user-pool', {
             userPoolName: 'ensyu2-user-pool',
             usernameAttributes: ["email"], // ログイン時のユーザー名
-            aliasAttributes: ["email"], // 本来のユーザー名とは別にメールアドレスや電話番号でもサインインできる
+            // aliasAttributes: ["email"], // 本来のユーザー名とは別にメールアドレスや電話番号でもサインインできる
             autoVerifiedAttributes: ["email"], // サインアップ時にメールにコードが届く
             policies: {
                 passwordPolicy: {
@@ -34,8 +37,25 @@ export class CognitoConstruct extends Construct {
             userPoolTier: "ESSENTIALS",
         });
 
+        // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPoolResourceServer.html
+        const resourceServer = new cognito.CfnUserPoolResourceServer(this, 'ensyu2-user-pool-resourceServer', {
+            identifier: "ensyu2-resource-server-API",
+            name: "ensyu2 Resource Server API",
+            userPoolId: this.userPool.ref,
+            scopes: [
+                {
+                    scopeName: "read",
+                    scopeDescription: "ユーザー情報の読み取り",
+                },
+                {
+                    scopeName: "write",
+                    scopeDescription: "ユーザー情報の登録・更新・削除"
+                }
+            ]
+        });
+
         const userPoolClient = new cognito.CfnUserPoolClient(this, 'ensyu2-user-pool-client', {
-            userPoolId: userPool.ref, // ユーザープールを指定
+            userPoolId: this.userPool.ref, // ユーザープールを指定
             clientName: "ensyu2-client",
             generateSecret: false,
             allowedOAuthFlowsUserPoolClient: true,
@@ -49,7 +69,7 @@ export class CognitoConstruct extends Construct {
                 "ensyu2-resource-server-API/write",
             ],
             callbackUrLs: [
-                props.distribution.attrDomainName
+                "https://" + props.distribution.attrDomainName
             ],
             // defaultRedirectUri: props.distribution.attrDomainName
             supportedIdentityProviders: [ // マネージドログインでどのプロバイダーを使えるようにするか
@@ -73,21 +93,12 @@ export class CognitoConstruct extends Construct {
             //     "name",
             // ]
         });
-        // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPoolResourceServer.html
-        const resourceServer = new cognito.CfnUserPoolResourceServer(this, 'ensyu2-user-pool-resourceServer', {
-            identifier: "ensyu2-resource-server-API",
-            name: "ensyu2 Resource Server API",
-            userPoolId: userPool.ref,
-            scopes: [
-                {
-                    scopeName: "read",
-                    scopeDescription: "ユーザー情報の読み取り",
-                },
-                {
-                    scopeName: "write",
-                    scopeDescription: "ユーザー情報の登録・更新・削除"
-                }
-            ]
+        userPoolClient.addResourceDependency(resourceServer);
+
+        const userPoolDomain = new cognito.CfnUserPoolDomain(this, "ensyu2-user-pool-domain", {
+            userPoolId: this.userPool.ref,
+            domain: "ensyu2-managed-login",
+            managedLoginVersion: 2,
         });
     }
 }
