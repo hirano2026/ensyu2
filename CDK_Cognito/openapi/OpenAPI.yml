@@ -15,7 +15,9 @@ servers:
 paths:
   "/users":
     get: # GETのときはparametersとresponsesを記述する
-      summary: ユーザーの一覧表示        
+      summary: ユーザーの一覧表示 
+      security:
+        - MyAuthorizer: ["ensyu2-resource-server-API/read"]
       responses: # APIが返す結果の定義
         "200": # リクエストが正常に処理できた
           description: 正常にユーザーの一覧を取得
@@ -101,6 +103,8 @@ paths:
 
     post:
       summary: "ユーザーの新規登録"
+      security:
+        - MyAuthorizer: ["ensyu2-resource-server-API/write"]
       requestBody:
         required: true
         content:
@@ -192,6 +196,8 @@ paths:
   "/users/{userID}":
     get:
       summary: ユーザーの詳細情報取得
+      security:
+        - MyAuthorizer: ["ensyu2-resource-server-API/read"]
       parameters:
         - name: userID # パラメータの名前が入る
           in: path # pathかquery
@@ -264,6 +270,9 @@ paths:
 
     put:
       summary: "ユーザーの更新"
+      security:
+        - MyAuthorizer: ["ensyu2-resource-server-API/read"]
+        - MyAuthorizer: ["ensyu2-resource-server-API/write"]
       parameters:
         - name: userID # パラメータの名前が入る
           in: path # pathかquery
@@ -346,6 +355,8 @@ paths:
 
     delete:
       summary: "ユーザーの削除"
+      security:
+        - MyAuthorizer: ["ensyu2-resource-server-API/write"]
       parameters:
         - name: userID
           in: path

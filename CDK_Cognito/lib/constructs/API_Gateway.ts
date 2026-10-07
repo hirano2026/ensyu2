@@ -2,6 +2,7 @@ import * as openapix from "@alma-cdk/openapix";
 import * as path from "path";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 import { Construct } from "constructs";
 
 import { APIGatewayConfig } from "../../config/Dev";
@@ -16,6 +17,8 @@ interface APIGatewayProps {
         editUser: lambda.Function;
         deleteUser: lambda.Function;
     }
+
+    userPool: cognito.CfnUserPool;
 }
 
 export class APIGatewayConstruct extends Construct {
@@ -43,6 +46,16 @@ export class APIGatewayConstruct extends Construct {
         const api = new openapix.Api(this, "api", {
             source: path.join (__dirname, '../../openapi/OpenAPI.yml'),
             
+            authorizers: [
+                new openapix.CognitoUserPoolsAuthorizer(
+                    this,
+                    'ensyu2-Cognito-Authorizer',
+                    {
+                        cognitoUserPools: [props.userPool]
+                    }
+                )
+            ]
+
             restApiProps: {
                 policy: apiPolicy,  
                 restApiName: "ensyu2-API",   
