@@ -23,59 +23,44 @@ export class LambdaFunctions extends Construct {
     constructor(scope: Construct, id: string, props: LambdaFunctionsProps) { 
         super(scope, id);
 
+        const environment = {
+            TABLE_NAME: props.table.tableName,
+            WEBSITE_URL: "https://" + props.distribution.attrDomainName,
+        };
+
         // 一覧表示
         this.indexUser = new lambda.Function(this, "indexUser", {
             ...lambdaConfig.indexUser.functionProps,
             ...lambdaConfig.common,
-
-            environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
-                TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
-            },
+            environment,
         });
 
         // 詳細表示
         this.showUser = new lambda.Function(this, "showUser", {
             ...lambdaConfig.showUser.functionProps,
             ...lambdaConfig.common,
-
-            environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
-                TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
-            },
+            environment,
         });
 
         // 新規登録
         this.newUser = new lambda.Function(this, "newUser", {
             ...lambdaConfig.newUser.functionProps,
             ...lambdaConfig.common,
-
-            environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
-                TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
-            },
+            environment,
         });
 
         // 編集
         this.editUser = new lambda.Function(this, "editUser", {
             ...lambdaConfig.editUser.functionProps,
             ...lambdaConfig.common,
-
-            environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
-                TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
-            },
+            environment,
         });
 
         // 削除
         this.deleteUser = new lambda.Function(this, "deleteUser", {
             ...lambdaConfig.deleteUser.functionProps,
             ...lambdaConfig.common,
-
-            environment: { // これでpythonファイルに環境変数としてテーブル名を渡せる
-                TABLE_NAME: props.table.tableName,
-                WEBSITE_URL: "https://" + props.distribution.attrDomainName,
-            },
+            environment,
         });
 
         // DynamoDB実行ロール

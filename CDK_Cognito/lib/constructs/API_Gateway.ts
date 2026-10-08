@@ -43,45 +43,13 @@ export class APIGatewayConstruct extends Construct {
             ]
         });
 
-        
         const MyAPI = new apigateway.CfnRestApi(this, 'MyAPI', {
-            description: '個人情報管理システム用API',
-            disableExecuteApiEndpoint: false, //デフォルトAPIエンドポイントを無効にするか（カスタムドメインならデフォルトはいらないからTrueにする）
-            // 参考サイト「https://note.funlead.co.jp/n/ncc85eac6268d」
-            endpointAccessMode: 'STRICT', // SecurityPolicy_で始まるもの(拡張ポリシー)を使う場合はエンドポイントアクセスモードの指定が必須(BASIC or STRICT)
-            endpointConfiguration: {
-                // ipAddressType: 'ipAddressType', IPv4なのかとかの設定
-                types: ['REGIONAL'], // REGIONAL or EDGE or PRIVATE
-                // vpcEndpointIds: ['vpcEndpointIds'], プライベートAPIでVPC Endpointと関連付けるときに使う
-            },
-            failOnWarnings: false, // warningで停止させるか
-            name: 'ensyu2-API',
-            policy: apiPolicy.toJSON(),
-            securityPolicy: 'SecurityPolicy_TLS13_1_3_2025_09',
-
-            // body: body, これはOpenAPI定義を直接渡してREST APIを構築するときに使う
-            //   bodyS3Location: { S3においてあるOpenAPIを使う場合はこれ
-            //     bucket: 'bucket',
-            //     eTag: 'eTag',
-            //     key: 'key',
-            //     version: 'version',
-            //   },
-            //   mode: 'mode', openAPIを使ってREST APIを定義するときに使用
-            //   parameters: { これもopenAPIで使うかも
-            //     parametersKey: 'parameters',
-            //   },
-            //   tags: [{
-            //     key: 'key',
-            //     value: 'value',
-            //   }],
-            //   version: 'version',
+            policy: apiPolicy,
+            ...APIGatewayConfig.restApi,
         });
 
         const cognitoAuthorizer = new apigateway.CfnAuthorizer(this, "CognitoAuthorizer", {
-            name: "ensyu2-CognitoAuthorizer",
             restApiId: MyAPI.ref,
-            type: "COGNITO_USER_POOLS",
-            identitySource: "method.request.header.Authorization",
             providerArns: [
                 cdk.Fn.sub(
                     "arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}",
@@ -90,27 +58,22 @@ export class APIGatewayConstruct extends Construct {
                     }
                 ),
             ],
-        })
-
+            ...APIGatewayConfig.authorizer,
+        });
 
         const users = new apigateway.CfnResource(this, "UsersResource", {
             parentId: MyAPI.attrRootResourceId,
-            pathPart: "users",
             restApiId: MyAPI.ref,
+            pathPart: APIGatewayConfig.resource.users.pathPart,
         });
 
         const indexUser = new apigateway.CfnMethod(this, "indexUserMethod", {
-            httpMethod: "GET",
             resourceId: users.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "COGNITO_USER_POOLS",
             authorizerId: cognitoAuthorizer.ref,
-            authorizationScopes: [
-                "ensyu2-resource-server-API/read",
-            ],
+            ...APIGatewayConfig.methods.indexUser,
             integration: {
-                type: "AWS_PROXY", // Lambdaプロキシ統合
-                integrationHttpMethod: "POST",
+                ...APIGatewayConfig.integration,
                 // timeoutInMillis: 123,
                 uri: cdk.Fn.sub( // 参考「https://dev.classmethod.jp/articles/cloudformation_template_for_api_gateway_integration_to_lambda/」
                     "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations",
@@ -122,17 +85,12 @@ export class APIGatewayConstruct extends Construct {
         });
 
         const newUser = new apigateway.CfnMethod(this, "newUserMethod", {
-            httpMethod: "POST",
             resourceId: users.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "COGNITO_USER_POOLS",
             authorizerId: cognitoAuthorizer.ref,
-            authorizationScopes: [
-                "ensyu2-resource-server-API/write",
-            ],
+            ...APIGatewayConfig.methods.newUser,
             integration: {
-                type: "AWS_PROXY", // Lambdaプロキシ統合
-                integrationHttpMethod: "POST",
+                ...APIGatewayConfig.integration,
                 // timeoutInMillis: 123,
                 uri: cdk.Fn.sub(
                     "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations",
@@ -145,28 +103,27 @@ export class APIGatewayConstruct extends Construct {
 
         // L1はOPTIONSでCORSの設定をする
         const usersOptions = new apigateway.CfnMethod(this, "UsersOptionsMethod", {
-            httpMethod: "OPTIONS",
             resourceId: users.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "NONE",
+            ...APIGatewayConfig.cors.users.options,
             integration: {
-                type: "MOCK", // Lambdaプロキシ統合
+                type: APIGatewayConfig.cors.users.integration.type, // Lambdaプロキシ統合
                 requestTemplates: {
-                    "application/json": '{"statusCode": 204}',
+                    "application/json": `{"statusCode": ${APIGatewayConfig.cors.users.integration.statusCode}}`,
                 },
                 integrationResponses: [
                     {
-                        statusCode: "204",
+                        statusCode: `${APIGatewayConfig.cors.users.integration.statusCode}`,
 
                         responseParameters: {
                             "method.response.header.Access-Control-Allow-Origin":
                                 `'${props.websiteUrl}'`,
 
                             "method.response.header.Access-Control-Allow-Methods":
-                                "'GET,POST,OPTIONS'",
+                                `'${APIGatewayConfig.cors.users.allowMethods}'`,
 
                             "method.response.header.Access-Control-Allow-Headers":
-                                "'Content-Type,Authorization'",
+                                `'${APIGatewayConfig.cors.users.allowHeaders}'`,
                         },
                     },
                 ],
@@ -174,7 +131,7 @@ export class APIGatewayConstruct extends Construct {
 
             methodResponses: [
                 {
-                    statusCode: "204",
+                    statusCode: `${APIGatewayConfig.cors.users.integration.statusCode}`,
 
                     responseParameters: {
                         "method.response.header.Access-Control-Allow-Origin":
@@ -192,22 +149,17 @@ export class APIGatewayConstruct extends Construct {
 
         const userId = new apigateway.CfnResource(this, "UserIdResource", {
             parentId: users.ref,
-            pathPart: "{userID}",
             restApiId: MyAPI.ref,
+            pathPart: APIGatewayConfig.resource.userId.pathPart,
         });
 
         const showUser = new apigateway.CfnMethod(this, "showUserMethod", {
-            httpMethod: "GET",
             resourceId: userId.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "COGNITO_USER_POOLS",
             authorizerId: cognitoAuthorizer.ref,
-            authorizationScopes: [
-                "ensyu2-resource-server-API/read",
-            ],
+            ...APIGatewayConfig.methods.showUser,
             integration: {
-                type: "AWS_PROXY", // Lambdaプロキシ統合
-                integrationHttpMethod: "POST",
+                ...APIGatewayConfig.integration,
                 // timeoutInMillis: 123,
                 uri: cdk.Fn.sub(
                     "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations",
@@ -219,18 +171,12 @@ export class APIGatewayConstruct extends Construct {
         });
 
         const editUser = new apigateway.CfnMethod(this, "editUserMethod", {
-            httpMethod: "PUT",
             resourceId: userId.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "COGNITO_USER_POOLS",
             authorizerId: cognitoAuthorizer.ref,
-            authorizationScopes: [
-                "ensyu2-resource-server-API/read",
-                "ensyu2-resource-server-API/write",
-            ],
+            ...APIGatewayConfig.methods.editUser,
             integration: {
-                type: "AWS_PROXY", // Lambdaプロキシ統合
-                integrationHttpMethod: "POST",
+                ...APIGatewayConfig.integration,
                 // timeoutInMillis: 123,
                 uri: cdk.Fn.sub(
                     "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations",
@@ -242,17 +188,12 @@ export class APIGatewayConstruct extends Construct {
         });
 
         const deleteUser = new apigateway.CfnMethod(this, "deleteUserMethod", {
-            httpMethod: "DELETE",
             resourceId: userId.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "COGNITO_USER_POOLS",
             authorizerId: cognitoAuthorizer.ref,
-            authorizationScopes: [
-                "ensyu2-resource-server-API/read",
-            ],
+            ...APIGatewayConfig.methods.deleteUser,
             integration: {
-                type: "AWS_PROXY", // Lambdaプロキシ統合
-                integrationHttpMethod: "POST",
+                ...APIGatewayConfig.integration,
                 // timeoutInMillis: 123,
                 uri: cdk.Fn.sub(
                     "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations",
@@ -264,28 +205,27 @@ export class APIGatewayConstruct extends Construct {
         });
 
         const userIdOptions = new apigateway.CfnMethod(this, "UserIdOptionsMethod", {
-            httpMethod: "OPTIONS",
             resourceId: userId.ref,
             restApiId: MyAPI.ref,
-            authorizationType: "NONE",
+            ...APIGatewayConfig.cors.userId.options,
             integration: {
-                type: "MOCK", // Lambdaプロキシ統合
+                type: APIGatewayConfig.cors.userId.integration.type,
                 requestTemplates: {
-                    "application/json": '{"statusCode": 204}',
+                    "application/json": `{"statusCode": ${APIGatewayConfig.cors.userId.integration.statusCode}}`,
                 },
                 integrationResponses: [
                     {
-                        statusCode: "204",
+                        statusCode: `${APIGatewayConfig.cors.userId.integration.statusCode}`,
 
                         responseParameters: {
                             "method.response.header.Access-Control-Allow-Origin":
                                 `'${props.websiteUrl}'`,
 
                             "method.response.header.Access-Control-Allow-Methods":
-                                "'GET,PUT,DELETE,OPTIONS'",
+                                `'${APIGatewayConfig.cors.userId.allowMethods}'`,
 
                             "method.response.header.Access-Control-Allow-Headers":
-                                "'Content-Type,Authorization'",
+                                `'${APIGatewayConfig.cors.userId.allowHeaders}'`,
                         },
                     },
                 ],
@@ -293,7 +233,7 @@ export class APIGatewayConstruct extends Construct {
 
             methodResponses: [
                 {
-                    statusCode: "204",
+                    statusCode: `${APIGatewayConfig.cors.userId.integration.statusCode}`,
 
                     responseParameters: {
                         "method.response.header.Access-Control-Allow-Origin":
@@ -310,9 +250,8 @@ export class APIGatewayConstruct extends Construct {
         });
 
         new lambda.CfnPermission(this, "IndexUserPermission", {
-            action: "lambda:InvokeFunction",
             functionName: props.lambdas.indexUser.functionName,
-            principal: "apigateway.amazonaws.com",
+            ...APIGatewayConfig.lambdaPermission,
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
@@ -322,9 +261,8 @@ export class APIGatewayConstruct extends Construct {
         })
 
         new lambda.CfnPermission(this, "showUserPermission", {
-            action: "lambda:InvokeFunction",
             functionName: props.lambdas.showUser.functionName,
-            principal: "apigateway.amazonaws.com",
+            ...APIGatewayConfig.lambdaPermission,
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
@@ -334,9 +272,8 @@ export class APIGatewayConstruct extends Construct {
         })
 
         new lambda.CfnPermission(this, "newUserPermission", {
-            action: "lambda:InvokeFunction",
             functionName: props.lambdas.newUser.functionName,
-            principal: "apigateway.amazonaws.com",
+            ...APIGatewayConfig.lambdaPermission,
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
@@ -346,9 +283,8 @@ export class APIGatewayConstruct extends Construct {
         })
 
         new lambda.CfnPermission(this, "editUserPermission", {
-            action: "lambda:InvokeFunction",
             functionName: props.lambdas.editUser.functionName,
-            principal: "apigateway.amazonaws.com",
+            ...APIGatewayConfig.lambdaPermission,
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
@@ -358,9 +294,8 @@ export class APIGatewayConstruct extends Construct {
         })
 
         new lambda.CfnPermission(this, "deleteUserPermission", {
-            action: "lambda:InvokeFunction",
             functionName: props.lambdas.deleteUser.functionName,
-            principal: "apigateway.amazonaws.com",
+            ...APIGatewayConfig.lambdaPermission,
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
@@ -383,7 +318,7 @@ export class APIGatewayConstruct extends Construct {
         new apigateway.CfnStage(this, "Stage", {
             restApiId: MyAPI.ref,
             deploymentId: deployment.ref,
-            stageName: "test",
+            stageName: APIGatewayConfig.stage.stageName,
         })
 
         this.apiUrl = cdk.Fn.sub(

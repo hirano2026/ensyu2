@@ -3,6 +3,8 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib';
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 
 // 型定義
 interface LAMBDA_FUNCTION_CONFIG {
@@ -143,11 +145,96 @@ export const S3Config: S3_CONFIG = {
 };
 
 interface API_GATEWAY_CONFIG {
-    restApiName: string;
+    restApi: {
+        description?: string;
+        disableExecuteApiEndpoint: boolean;
+        endpointAccessMode: string;
+        endpointConfiguration: {
+            types: string[];
+        };
+        failOnWarnings: boolean;
+        name: string;
+        securityPolicy: string;
+    };
+    authorizer: {
+        name: string;
+        type: apigateway.AuthorizationType | string;
+        identitySource: string;
+    };
+    resource: {
+        users: {
+            pathPart: string;
+        };
+        userId: {
+            pathPart: string;
+        };
+    };
+    methods: {
+        indexUser: {
+            httpMethod: string;
+            authorizationType: string;
+            authorizationScopes: string[];
+        };
+
+        newUser: {
+            httpMethod: string;
+            authorizationType: string;
+            authorizationScopes: string[];
+        };
+
+        showUser: {
+            httpMethod: string;
+            authorizationType: string;
+            authorizationScopes: string[];
+        };
+
+        editUser: {
+            httpMethod: string;
+            authorizationType: string;
+            authorizationScopes: string[];
+        };
+
+        deleteUser: {
+            httpMethod: string;
+            authorizationType: string;
+            authorizationScopes: string[];
+        };
+    };
+    integration: {
+        type: string;
+        integrationHttpMethod: string;
+    };
+
     cors: {
-        allowMethods: string[];
-    } ;
+        users: {
+            options: {
+                httpMethod: string;
+                authorizationType: string;
+            }
+            integration: {
+                type: string;
+                statusCode: number;
+            };
+            allowMethods: string[];
+            allowHeaders: string[];
+        };
+        userId: {
+            options: {
+                httpMethod: string;
+                authorizationType: string;
+            }
+            integration: {
+                type: string;
+                statusCode: number;
+            };
+            allowMethods: string[];
+            allowHeaders: string[];
+        };
+
+    };
+
     resourcePolicy: {
+        effect: iam.Effect;
         actions: string[];
         resources: string[];
         conditions: {
@@ -155,27 +242,421 @@ interface API_GATEWAY_CONFIG {
                 "aws:SourceIp": string;
             };
         };
-    }
+    };
+
+    lambdaPermission: {
+        action: string;
+        principal: string;
+    };
+
+    stage: {
+        stageName: string;
+    };
+
 };
 
 export const APIGatewayConfig: API_GATEWAY_CONFIG = {
-    restApiName: "ensyu2-API",
-    cors: {
-        allowMethods: [
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "OPTIONS",
-        ],
+    restApi: {
+        description: "個人情報管理システム用API",
+        disableExecuteApiEndpoint: false,
+        endpointAccessMode: "STRICT",
+        endpointConfiguration: {
+            types: ["REGIONAL"],
+        },
+        failOnWarnings: false,
+        name: "ensyu2-API",
+        securityPolicy: "SecurityPolicy_TLS13_1_3_2025_09",
     },
+
+    authorizer: {
+        name: "ensyu2-CognitoAuthorizer",
+        type: "COGNITO_USER_POOLS",
+        identitySource: "method.request.header.Authorization",
+    },
+
+
+    resource: {
+        users: {
+            pathPart: "users",
+        },
+
+        userId: {
+            pathPart: "{userID}",
+        },
+    },
+
+
+    methods: {
+
+        indexUser: {
+            httpMethod: "GET",
+            authorizationType: "COGNITO_USER_POOLS",
+            authorizationScopes: [
+                "ensyu2-resource-server-API/read",
+            ],
+        },
+
+        newUser: {
+            httpMethod: "POST",
+            authorizationType: "COGNITO_USER_POOLS",
+            authorizationScopes: [
+                "ensyu2-resource-server-API/write",
+            ],
+        },
+
+        showUser: {
+            httpMethod: "GET",
+            authorizationType: "COGNITO_USER_POOLS",
+            authorizationScopes: [
+                "ensyu2-resource-server-API/read",
+            ],
+        },
+
+        editUser: {
+            httpMethod: "PUT",
+            authorizationType: "COGNITO_USER_POOLS",
+            authorizationScopes: [
+                "ensyu2-resource-server-API/read",
+                "ensyu2-resource-server-API/write",
+            ],
+        },
+
+        deleteUser: {
+            httpMethod: "DELETE",
+            authorizationType: "COGNITO_USER_POOLS",
+            authorizationScopes: [
+                "ensyu2-resource-server-API/read",
+            ],
+        },
+    },
+
+
+    integration: {
+        type: "AWS_PROXY",
+        integrationHttpMethod: "POST",
+    },
+
+
+    cors: {
+        users: {
+            options: {
+                httpMethod: "OPTIONS",
+                authorizationType: "NONE",
+            },
+
+            integration: {
+                type: "MOCK",
+                statusCode: 204,
+            },
+
+            allowMethods: [
+                "GET",
+                "POST",
+                "OPTIONS",
+            ],
+
+            allowHeaders: [
+                "Content-Type",
+                "Authorization",
+            ],
+        },
+        userId: {
+            options: {
+                httpMethod: "OPTIONS",
+                authorizationType: "NONE",
+            },
+
+            integration: {
+                type: "MOCK",
+                statusCode: 204,
+            },
+
+            allowMethods: [
+                "GET",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+            ],
+
+            allowHeaders: [
+                "Content-Type",
+                "Authorization",
+            ], 
+        }
+
+    },
+
+
     resourcePolicy: {
-        actions: ["execute-api:Invoke"],
-        resources: ["execute-api:/*"],
+        effect: iam.Effect.ALLOW,
+        actions: [
+            "execute-api:Invoke",
+        ],
+        resources: [
+            "execute-api:/*",
+        ],
         conditions: {
             IpAddress: {
                 "aws:SourceIp": "221.255.117.34/32",
             },
         },
-    }
+    },
+
+    lambdaPermission: {
+        action: "lambda:InvokeFunction",
+        principal: "apigateway.amazonaws.com",
+    },
+
+
+    stage: {
+        stageName: "test",
+    },
+};
+
+interface CLOUDFRONT_CONFIG {
+    originAccessControl: {
+        name: string;
+        originAccessControlOriginType: string;
+        signingBehavior: string;
+        signingProtocol: string;
+        description: string;
+    };
+
+    distribution: {
+        enabled: boolean;
+        defaultRootObject: string;
+        httpVersion: string;
+    };
+
+    origin: {
+        id: string;
+        s3OriginConfig: object;
+    };
+
+    defaultCacheBehavior: {
+        viewerProtocolPolicy: string;
+        compress: boolean;
+        cachePolicyId: string;
+    };
+
+    bucketPolicy: {
+        effect: iam.Effect;
+        actions: string[];
+    };
+}
+
+export const CloudFrontConfig: CLOUDFRONT_CONFIG = {
+    originAccessControl: {
+        name: "OriginAccessControlForContentsBucket",
+        originAccessControlOriginType: "s3",
+        signingBehavior: "always",
+        signingProtocol: "sigv4",
+        description: "Access Control",
+    },
+
+    distribution: {
+        enabled: true,
+        defaultRootObject: "index.html",
+        httpVersion: "http2",
+    },
+
+    origin: {
+        id: "S3Origin",
+        s3OriginConfig: {},
+    },
+
+    defaultCacheBehavior: {
+        viewerProtocolPolicy: "redirect-to-https",
+        compress: true,
+        cachePolicyId: cloudfront.CachePolicy.CACHING_OPTIMIZED.cachePolicyId,
+    },
+
+    bucketPolicy: {
+        effect: iam.Effect.ALLOW,
+        actions: [
+            "s3:GetObject",
+        ]
+    },
+};
+
+interface COGNITO_CONFIG {
+    userPool: {
+        userPoolName: string;
+        aliasAttributes: string[];
+        schema: {
+            name: string;
+            required: boolean;
+            mutable: boolean;
+        }[];
+        autoVerifiedAttributes: string[];
+        policies: {
+            passwordPolicy: {
+                minimumLength: number;
+                requireLowercase: boolean;
+                requireUppercase: boolean;
+                requireNumbers: boolean;
+                requireSymbols: boolean;
+            };
+        };
+        emailConfiguration: {
+            emailSendingAccount: string;
+        };
+        deletionProtection: string;
+        usernameConfiguration: {
+            caseSensitive: boolean;
+        };
+        userPoolTier: string;
+    };
+
+    resourceServer: {
+        identifier: string;
+        name: string;
+        scopes: {
+            scopeName: string;
+            scopeDescription: string;
+        }[];
+    };
+
+    userPoolClient: {
+        clientName: string;
+        generateSecret: boolean;
+        explicitAuthFlows: string[];
+        allowedOAuthFlowsUserPoolClient: boolean;
+        allowedOAuthFlows: string[];
+        allowedOAuthScopes: string[];
+        supportedIdentityProviders: string[];
+        accessTokenValidity: number;
+        idTokenValidity: number;
+        refreshTokenValidity: number;
+        authSessionValidity: number;
+        tokenValidityUnits: {
+            accessToken: string;
+            idToken: string;
+            refreshToken: string;
+        };
+        enableTokenRevocation: boolean;
+        preventUserExistenceErrors: string;
+    };
+
+    domain: {
+        domain: string;
+        managedLoginVersion: number;
+    };
+
+    managedLogin: {
+        useCognitoProvidedValues: boolean;
+    };
+}
+
+export const CognitoConfig: COGNITO_CONFIG = {
+    userPool: {
+        userPoolName: "ensyu2-user-pool",
+
+        aliasAttributes: [
+            "email",
+        ],
+
+        schema: [
+            {
+                name: "email",
+                required: true,
+                mutable: true,
+            },
+        ],
+
+        autoVerifiedAttributes: [
+            "email",
+        ],
+
+        policies: {
+            passwordPolicy: {
+                minimumLength: 6,
+                requireLowercase: true,
+                requireUppercase: true,
+                requireNumbers: true,
+                requireSymbols: true,
+            },
+        },
+
+        emailConfiguration: {
+            emailSendingAccount: "COGNITO_DEFAULT",
+        },
+
+        deletionProtection: "INACTIVE",
+
+        usernameConfiguration: {
+            caseSensitive: false,
+        },
+
+        userPoolTier: "ESSENTIALS",
+    },
+
+    resourceServer: {
+        identifier: "ensyu2-resource-server-API",
+        name: "ensyu2 Resource Server API",
+
+        scopes: [
+            {
+                scopeName: "read",
+                scopeDescription: "ユーザー情報の読み取り",
+            },
+            {
+                scopeName: "write",
+                scopeDescription: "ユーザー情報の登録・更新・削除",
+            },
+        ],
+    },
+
+    userPoolClient: {
+        clientName: "ensyu2-client",
+
+        generateSecret: false,
+
+        explicitAuthFlows: [
+            "ALLOW_USER_AUTH",
+            "ALLOW_USER_SRP_AUTH",
+            "ALLOW_REFRESH_TOKEN_AUTH",
+        ],
+
+        allowedOAuthFlowsUserPoolClient: true,
+
+        allowedOAuthFlows: [
+            "implicit",
+        ],
+
+        allowedOAuthScopes: [
+            "openid",
+            "email",
+            "ensyu2-resource-server-API/read",
+            "ensyu2-resource-server-API/write",
+        ],
+
+        supportedIdentityProviders: [
+            "COGNITO",
+        ],
+
+        accessTokenValidity: 60,
+        idTokenValidity: 60,
+        refreshTokenValidity: 5,
+        authSessionValidity: 3,
+
+        tokenValidityUnits: {
+            accessToken: "minutes",
+            idToken: "minutes",
+            refreshToken: "days",
+        },
+
+        enableTokenRevocation: true,
+
+        preventUserExistenceErrors: "ENABLED",
+    },
+
+    domain: {
+        domain: "ensyu2-managed-login",
+        managedLoginVersion: 2,
+    },
+
+    managedLogin: {
+        useCognitoProvidedValues: true,
+    },
 };

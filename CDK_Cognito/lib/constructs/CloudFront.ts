@@ -3,6 +3,7 @@ import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cdk from 'aws-cdk-lib/core';
+import { CloudFrontConfig } from '../../config/Dev'
 
 export interface CloudFrontProps {
     bucket: s3.Bucket;
@@ -17,11 +18,7 @@ export class CloudFrontConstruct extends Construct {
         // ドキュメントの補足：https://docs.aws.amazon.com/ja_jp/cloudfront/latest/APIReference/API_OriginAccessControlConfig.html
         const OriginAccessControl = new cloudfront.CfnOriginAccessControl(this, 'OriginAccessControl', {
             originAccessControlConfig: {
-                name: 'OriginAccessControlForContentsBucket',
-                originAccessControlOriginType: 's3',
-                signingBehavior: 'always',
-                signingProtocol: 'sigv4',
-                description: 'Access Control',
+                ...CloudFrontConfig.originAccessControl,
             },
         });
 
@@ -29,38 +26,28 @@ export class CloudFrontConstruct extends Construct {
         // ドキュメント補足：https://docs.aws.amazon.com/ja_jp/cloudfront/latest/APIReference/API_DistributionConfig.html
         this.distribution = new cloudfront.CfnDistribution(this, 'Distribution',{
             distributionConfig: {
-                enabled: true,
-                defaultRootObject: "index.html",
+                ...CloudFrontConfig.distribution,
                 origins: [
                     {
-                        id: "S3Origin",
                         domainName: props.bucket.bucketRegionalDomainName,
                         originAccessControlId: OriginAccessControl.ref,
-                        s3OriginConfig: {},
+                        ...CloudFrontConfig.origin,
                     },
                 ],
-                httpVersion: "http2",
                 // ドキュメント：https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-defaultcachebehavior.html
                 defaultCacheBehavior: { //pathを指定しない場合に必要になるデフォルトの設定
-                    targetOriginId: "S3Origin",
-                    viewerProtocolPolicy: "redirect-to-https",
-                    compress: true,
-                    cachePolicyId: cloudfront.CachePolicy.CACHING_OPTIMIZED.cachePolicyId,
+                    targetOriginId: CloudFrontConfig.origin.id,
+                    ...CloudFrontConfig.defaultCacheBehavior,
                 },
             },
         });
         props.bucket.addToResourcePolicy(
             new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-
+                ...CloudFrontConfig.bucketPolicy,
                 principals: [
                     new iam.ServicePrincipal(
                         "cloudfront.amazonaws.com"
                     ),
-                ],
-
-                actions: [
-                    "s3:GetObject",
                 ],
 
                 resources: [
