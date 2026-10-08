@@ -115,6 +115,9 @@ def lambda_handler(event, context):
         print("サーバーでエラーが発生しました")
         return {
             "statusCode": 500,
+            "headers": {
+                "ACCess-Control-Allow-Origin": website_url
+            },
             "body": json.dumps({
                 "message": "サーバーエラーが発生しました"
             })

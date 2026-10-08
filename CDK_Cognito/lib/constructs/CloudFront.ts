@@ -39,6 +39,7 @@ export class CloudFrontConstruct extends Construct {
                         s3OriginConfig: {},
                     },
                 ],
+                httpVersion: "http2",
                 // ドキュメント：https://docs.aws.amazon.com/ja_jp/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-defaultcachebehavior.html
                 defaultCacheBehavior: { //pathを指定しない場合に必要になるデフォルトの設定
                     targetOriginId: "S3Origin",

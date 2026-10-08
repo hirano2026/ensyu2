@@ -30,7 +30,7 @@ export class CognitoConstruct extends Construct {
             emailConfiguration: { // メール認証時にAWSの用意したメールで確認コードが送られる。自分のメールアドレスとかに指定できる？
                 emailSendingAccount: "COGNITO_DEFAULT",
             },
-            deletionProtection: "ACTIVE", // ユーザーを誤って削除しないように保護
+            deletionProtection: "INACTIVE", // ユーザーを誤って削除しないように保護
             usernameConfiguration: { // 大文字と小文字を区別
                 caseSensitive: false,
             },
