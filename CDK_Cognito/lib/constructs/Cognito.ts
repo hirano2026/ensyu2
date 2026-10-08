@@ -15,8 +15,15 @@ export class CognitoConstruct extends Construct {
         // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPool.html
         this.userPool = new cognito.CfnUserPool(this, 'ensyu2-user-pool', {
             userPoolName: 'ensyu2-user-pool',
-            usernameAttributes: ["email"], // ログイン時のユーザー名
-            // aliasAttributes: ["email"], // 本来のユーザー名とは別にメールアドレスや電話番号でもサインインできる
+            // usernameAttributes: ["email"], // ログイン時のユーザー名をメールアドレスにする
+            aliasAttributes: ["email"], // 本来のユーザー名とは別にメールアドレスや電話番号でもサインインできる
+            schema: [
+                {
+                    name: "email",
+                    required: true,
+                    mutable: true,
+                },
+            ],
             autoVerifiedAttributes: ["email"], // サインアップ時にメールにコードが届く
             policies: {
                 passwordPolicy: {
@@ -58,6 +65,11 @@ export class CognitoConstruct extends Construct {
             userPoolId: this.userPool.ref, // ユーザープールを指定
             clientName: "ensyu2-client",
             generateSecret: false,
+            explicitAuthFlows: [
+                "ALLOW_USER_AUTH",
+                "ALLOW_USER_SRP_AUTH",
+                "ALLOW_REFRESH_TOKEN_AUTH",
+            ],
             allowedOAuthFlowsUserPoolClient: true,
             allowedOAuthFlows: [
                 "implicit"
@@ -100,5 +112,12 @@ export class CognitoConstruct extends Construct {
             domain: "ensyu2-managed-login",
             managedLoginVersion: 2,
         });
+
+        const managedLogin = new cognito.CfnManagedLoginBranding(this, 'managedLogin', {
+            userPoolId: this.userPool.ref,
+            clientId: userPoolClient.ref,
+            useCognitoProvidedValues: true,
+
+        })
     }
 }
