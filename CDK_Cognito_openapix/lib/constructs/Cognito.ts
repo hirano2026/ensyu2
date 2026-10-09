@@ -9,24 +9,26 @@ interface CognitoProps {
 
 export class CognitoConstruct extends Construct {
 
-    public readonly userPool: cognito.CfnUserPool;
+    public readonly userPool: cognito.IUserPool;
 
     constructor(scope: Construct, id: string, props: CognitoProps) {
         super(scope, id);
         // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPool.html
-        this.userPool = new cognito.CfnUserPool(this, 'ensyu2-user-pool', {
+        const CfnUserPool = new cognito.CfnUserPool(this, 'ensyu2-user-pool', {
             // usernameAttributes: ["email"], // ログイン時のユーザー名をメールアドレスにする
             ...CognitoConfig.userPool,
         });
 
+        this.userPool = cognito.UserPool.fromUserPoolId(this, "UserPoolReference",CfnUserPool.ref);
+
         // ドキュメント：https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cognito.CfnUserPoolResourceServer.html
         const resourceServer = new cognito.CfnUserPoolResourceServer(this, 'ensyu2-user-pool-resourceServer', {
-            userPoolId: this.userPool.ref,
+            userPoolId: CfnUserPool.ref,
             ...CognitoConfig.resourceServer,
         });
 
         const userPoolClient = new cognito.CfnUserPoolClient(this, 'ensyu2-user-pool-client', {
-            userPoolId: this.userPool.ref, // ユーザープールを指定
+            userPoolId: CfnUserPool.ref, // ユーザープールを指定
             callbackUrLs: [
                 "https://" + props.distribution.attrDomainName
             ],
@@ -42,12 +44,12 @@ export class CognitoConstruct extends Construct {
         userPoolClient.addResourceDependency(resourceServer);
 
         const userPoolDomain = new cognito.CfnUserPoolDomain(this, "ensyu2-user-pool-domain", {
-            userPoolId: this.userPool.ref,
+            userPoolId: CfnUserPool.ref,
             ...CognitoConfig.domain,
         });
 
         const managedLogin = new cognito.CfnManagedLoginBranding(this, 'managedLogin', {
-            userPoolId: this.userPool.ref,
+            userPoolId: CfnUserPool.ref,
             clientId: userPoolClient.ref,
             ...CognitoConfig.managedLogin,
         })

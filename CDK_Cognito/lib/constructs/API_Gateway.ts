@@ -24,6 +24,8 @@ interface APIGatewayProps {
 export class APIGatewayConstruct extends Construct {
 
     public readonly apiUrl: string;
+    public readonly restApi: apigateway.CfnRestApi;
+    public readonly stage: apigateway.CfnStage;
     
     constructor(scope: Construct, id: string, props: APIGatewayProps) {
         super(scope, id);// 親クラスcdk.Stackのconstructorを呼び出し
@@ -43,13 +45,13 @@ export class APIGatewayConstruct extends Construct {
             ]
         });
 
-        const MyAPI = new apigateway.CfnRestApi(this, 'MyAPI', {
+        this.restApi = new apigateway.CfnRestApi(this, 'MyAPI', {
             policy: apiPolicy,
             ...APIGatewayConfig.restApi,
         });
 
         const cognitoAuthorizer = new apigateway.CfnAuthorizer(this, "CognitoAuthorizer", {
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             providerArns: [
                 cdk.Fn.sub(
                     "arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${UserPoolId}",
@@ -62,14 +64,14 @@ export class APIGatewayConstruct extends Construct {
         });
 
         const users = new apigateway.CfnResource(this, "UsersResource", {
-            parentId: MyAPI.attrRootResourceId,
-            restApiId: MyAPI.ref,
+            parentId: this.restApi.attrRootResourceId,
+            restApiId: this.restApi.ref,
             pathPart: APIGatewayConfig.resource.users.pathPart,
         });
 
         const indexUser = new apigateway.CfnMethod(this, "indexUserMethod", {
             resourceId: users.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             authorizerId: cognitoAuthorizer.ref,
             ...APIGatewayConfig.methods.indexUser,
             integration: {
@@ -86,7 +88,7 @@ export class APIGatewayConstruct extends Construct {
 
         const newUser = new apigateway.CfnMethod(this, "newUserMethod", {
             resourceId: users.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             authorizerId: cognitoAuthorizer.ref,
             ...APIGatewayConfig.methods.newUser,
             integration: {
@@ -104,7 +106,7 @@ export class APIGatewayConstruct extends Construct {
         // L1はOPTIONSでCORSの設定をする
         const usersOptions = new apigateway.CfnMethod(this, "UsersOptionsMethod", {
             resourceId: users.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             ...APIGatewayConfig.cors.users.options,
             integration: {
                 type: APIGatewayConfig.cors.users.integration.type, // Lambdaプロキシ統合
@@ -149,13 +151,13 @@ export class APIGatewayConstruct extends Construct {
 
         const userId = new apigateway.CfnResource(this, "UserIdResource", {
             parentId: users.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             pathPart: APIGatewayConfig.resource.userId.pathPart,
         });
 
         const showUser = new apigateway.CfnMethod(this, "showUserMethod", {
             resourceId: userId.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             authorizerId: cognitoAuthorizer.ref,
             ...APIGatewayConfig.methods.showUser,
             integration: {
@@ -172,7 +174,7 @@ export class APIGatewayConstruct extends Construct {
 
         const editUser = new apigateway.CfnMethod(this, "editUserMethod", {
             resourceId: userId.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             authorizerId: cognitoAuthorizer.ref,
             ...APIGatewayConfig.methods.editUser,
             integration: {
@@ -189,7 +191,7 @@ export class APIGatewayConstruct extends Construct {
 
         const deleteUser = new apigateway.CfnMethod(this, "deleteUserMethod", {
             resourceId: userId.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             authorizerId: cognitoAuthorizer.ref,
             ...APIGatewayConfig.methods.deleteUser,
             integration: {
@@ -206,7 +208,7 @@ export class APIGatewayConstruct extends Construct {
 
         const userIdOptions = new apigateway.CfnMethod(this, "UserIdOptionsMethod", {
             resourceId: userId.ref,
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
             ...APIGatewayConfig.cors.userId.options,
             integration: {
                 type: APIGatewayConfig.cors.userId.integration.type,
@@ -255,7 +257,7 @@ export class APIGatewayConstruct extends Construct {
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
-                    ApiId: MyAPI.ref,
+                    ApiId: this.restApi.ref,
                 }
             ),
         })
@@ -266,7 +268,7 @@ export class APIGatewayConstruct extends Construct {
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
-                    ApiId: MyAPI.ref,
+                    ApiId: this.restApi.ref,
                 }
             ),
         })
@@ -277,7 +279,7 @@ export class APIGatewayConstruct extends Construct {
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
-                    ApiId: MyAPI.ref,
+                    ApiId: this.restApi.ref,
                 }
             ),
         })
@@ -288,7 +290,7 @@ export class APIGatewayConstruct extends Construct {
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
-                    ApiId: MyAPI.ref,
+                    ApiId: this.restApi.ref,
                 }
             ),
         })
@@ -299,13 +301,13 @@ export class APIGatewayConstruct extends Construct {
             sourceArn: cdk.Fn.sub(
                 "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/*",
                 {
-                    ApiId: MyAPI.ref,
+                    ApiId: this.restApi.ref,
                 }
             ),
         })
 
         const deployment = new apigateway.CfnDeployment(this, "Deployment", {
-            restApiId: MyAPI.ref,
+            restApiId: this.restApi.ref,
         });
         deployment.addResourceDependency(indexUser);
         deployment.addResourceDependency(newUser);
@@ -315,8 +317,8 @@ export class APIGatewayConstruct extends Construct {
         deployment.addResourceDependency(usersOptions);
         deployment.addResourceDependency(userIdOptions);
 
-        new apigateway.CfnStage(this, "Stage", {
-            restApiId: MyAPI.ref,
+        this.stage = new apigateway.CfnStage(this, "Stage", {
+            restApiId: this.restApi.ref,
             deploymentId: deployment.ref,
             stageName: APIGatewayConfig.stage.stageName,
         })
@@ -324,7 +326,7 @@ export class APIGatewayConstruct extends Construct {
         this.apiUrl = cdk.Fn.sub(
             "https://${ApiId}.execute-api.${AWS::Region}.amazonaws.com/test/",
             {
-                ApiId: MyAPI.ref,
+                ApiId: this.restApi.ref,
             }
         );
     }
