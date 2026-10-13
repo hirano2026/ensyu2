@@ -54,14 +54,25 @@ export class WAFConstruct extends Construct {
             ],
         });
 
+        new cdk.CfnOutput(this, "DebugApiId", {
+            value: props.api.restApiId,
+            description: "API Gateway REST API ID",
+        });
+
         const stageArn =
             `arn:${cdk.Stack.of(this).partition}:apigateway:` +
             `${cdk.Stack.of(this).region}::/restapis/` +
             `${props.api.restApiId}/stages/${props.stageName}`;
 
-        new wafv2.CfnWebACLAssociation(this, "WAFAssociation", {
+        new cdk.CfnOutput(this, "DebugStageArn", {
+            value: stageArn,
+            description: "WAF association stage ARN",
+        });
+
+        const association = new wafv2.CfnWebACLAssociation(this, "WAFAssociation", {
             resourceArn: stageArn,
             webAclArn: webAcl.attrArn,
         });
+        association.node.addDependency(props.api.deploymentStage);
     }
 }

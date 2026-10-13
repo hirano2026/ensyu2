@@ -271,7 +271,6 @@ paths:
     put:
       summary: "ユーザーの更新"
       security:
-        - ensyu2-Cognito-Authorizer: ["ensyu2-resource-server-API/read"]
         - ensyu2-Cognito-Authorizer: ["ensyu2-resource-server-API/write"]
       parameters:
         - name: userID # パラメータの名前が入る
