@@ -96,6 +96,7 @@ interface DYNAMODB_CONFIG {
             type: dynamodb.AttributeType;
         };
         removalPolicy: cdk.RemovalPolicy;
+        stream: dynamodb.StreamViewType;
     }
 }
 
@@ -107,6 +108,7 @@ export const DynamoDBConfig: DYNAMODB_CONFIG = {
             type: dynamodb.AttributeType.STRING,
         },
         removalPolicy: cdk.RemovalPolicy.DESTROY,
+        stream: dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
     }    
 };
 
@@ -431,3 +433,51 @@ export const APIGatewayConfig: API_GATEWAY_CONFIG = {
         },
     }
 };
+
+interface SNS_LAMBDA_CONFIG {
+    snsFunction: {
+        functionName: string;
+        code: lambda.Code;
+        handler: string;
+    };
+    eventSource: {
+        startingPosition: lambda.StartingPosition;
+        batchSize: number;
+    };
+    addRoleDynamodb: {
+        effect: iam.Effect;
+        actions: string[];
+    };
+    addRoleSns: {
+        effect: iam.Effect;
+        actions: string[];
+        resources: string[];
+    };
+}
+
+export const snsLambdaConfig : SNS_LAMBDA_CONFIG = {
+    snsFunction: {
+        functionName: "ensyu2-snsDeleteUser",
+        code: lambda.Code.fromAsset("./lambda/SNS_delete_user/"),
+        handler: "SNS_delete_user.lambda_handler",
+    },
+    eventSource: {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 1,
+    },
+    addRoleDynamodb: {
+        effect: iam.Effect.ALLOW,
+        actions: [
+            "dynamodb:UpdateItem",
+        ],
+    },
+    addRoleSns: {
+        effect: iam.Effect.ALLOW,
+        actions: [
+            "sns:CreateTopic",
+            "sns:Publish",
+            "sns:Subscribe",
+        ],
+        resources: ["*"],
+    },
+}
