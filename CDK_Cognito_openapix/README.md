@@ -1,3 +1,4 @@
+このスタックはSNSメール通知をユーザーごとにトピックを作ってサブスクリプションに登録するっていう変なシステムのバージョン
 # Welcome to your CDK TypeScript project
 
 This is a blank project for CDK development with TypeScript.
