@@ -4,6 +4,7 @@ import * as eventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 import { lambdaConfig } from "../../config/Dev";
 import { snsLambdaConfig } from "../../config/Dev";
@@ -11,6 +12,7 @@ import { snsLambdaConfig } from "../../config/Dev";
 interface LambdaFunctionsProps {
     table: dynamodb.Table;
     distribution: cloudfront.CfnDistribution;
+    topic: sns.CfnTopic;
 }
 
 export class LambdaFunctions extends Construct {
@@ -117,7 +119,7 @@ export class LambdaFunctions extends Construct {
         const snsDeleteUser = new lambda.Function(this, "snsDeleteUser", {
             ...snsLambdaConfig.snsFunction,
             ...lambdaConfig.common,
-            environment: {TABLE_NAME: props.table.tableName},
+            environment: {SNS_TOPIC_ARN: props.topic.attrTopicArn},
         });
 
         snsDeleteUser.addEventSource(
@@ -126,14 +128,6 @@ export class LambdaFunctions extends Construct {
             })
         );
 
-        snsDeleteUser.addToRolePolicy(
-            new iam.PolicyStatement({
-                ...snsLambdaConfig.addRoleDynamodb,
-                resources: [
-                    props.table.tableArn,
-                ],
-            })
-        )
         snsDeleteUser.addToRolePolicy(
             new iam.PolicyStatement({
                 ...snsLambdaConfig.addRoleSns,

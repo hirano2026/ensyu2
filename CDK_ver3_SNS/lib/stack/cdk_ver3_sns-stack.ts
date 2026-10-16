@@ -10,7 +10,8 @@ import { APIGatewayConstruct } from "../constructs/API_Gateway";
 import { CognitoConstruct } from "../constructs/Cognito"
 import { CloudFrontConstruct } from "../constructs/CloudFront";
 import { WAFConstruct } from "../constructs/WAF";
-// import { Cognito } from "../constructs/Cognito";
+import { SNSConstruct } from "../constructs/sns";
+
 
 export class MainStack extends cdk.Stack {
 
@@ -51,6 +52,12 @@ export class MainStack extends cdk.Stack {
       }
     );
 
+    // SNS Construct
+    const sns = new SNSConstruct(
+      this,
+      "SNS",
+    )
+
     // Lambda Construct
     const lambdaFunctions = new LambdaFunctions(
       this,
@@ -58,6 +65,7 @@ export class MainStack extends cdk.Stack {
       {
         table: database.usersTable,
         distribution: cloudfront.distribution,
+        topic: sns.topic,
       }
     );
 

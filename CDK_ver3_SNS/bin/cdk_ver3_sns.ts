@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
-import { MainStack } from '../lib/cdk_ver3_sns-stack';
+import { MainStack } from '../lib/stack/cdk_ver3_sns-stack';
 
 const app = new cdk.App();
 new MainStack(app, 'ensyu2-Stack', {

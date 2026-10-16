@@ -444,10 +444,6 @@ interface SNS_LAMBDA_CONFIG {
         startingPosition: lambda.StartingPosition;
         batchSize: number;
     };
-    addRoleDynamodb: {
-        effect: iam.Effect;
-        actions: string[];
-    };
     addRoleSns: {
         effect: iam.Effect;
         actions: string[];
@@ -465,12 +461,6 @@ export const snsLambdaConfig : SNS_LAMBDA_CONFIG = {
         startingPosition: lambda.StartingPosition.LATEST,
         batchSize: 1,
     },
-    addRoleDynamodb: {
-        effect: iam.Effect.ALLOW,
-        actions: [
-            "dynamodb:UpdateItem",
-        ],
-    },
     addRoleSns: {
         effect: iam.Effect.ALLOW,
         actions: [
@@ -480,4 +470,26 @@ export const snsLambdaConfig : SNS_LAMBDA_CONFIG = {
         ],
         resources: ["*"],
     },
+}
+
+interface SNS_CONFIG {
+    topicConfig: {
+        topicName: string;
+        fifoTopic: boolean;
+    };
+    subscriptionConfig: {
+        protocol: string;
+        endpoint: string;
+    };
+}
+
+export const SNSConfig : SNS_CONFIG = {
+    topicConfig: {
+        topicName: "ensyu2-topic",
+        fifoTopic: false,
+    },
+    subscriptionConfig: {
+        protocol: "email",
+        endpoint: "wakamesuupu6@gmail.com"
+    }
 }

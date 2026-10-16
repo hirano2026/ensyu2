@@ -28,7 +28,7 @@ def get_current_time():
 def publish_function(subject, message):
     sns.publish(
         TopicArn=SNS_TOPIC_ARN,
-        Subject="subject",
+        Subject=subject,
         Message=message,
     )
 
@@ -80,10 +80,12 @@ def lambda_handler(event, context):
             new_image = deserialize_image(dynamodb_data.get("NewImage"))
             old_image = deserialize_image(dynamodb_data.get("OldImage"))
             new_user_id = new_image.get("userID")
+            old_phone = old_image.get("phone") or "未登録"
+            new_phone = new_image.get("phone") or "未登録"
             edited_at_str = get_current_time()
 
             fields = [
-                ("userID", "ユーザーID")
+                ("userID", "ユーザーID"),
                 ("name", "名前"),
                 ("email", "メールアドレス"),
                 ("birth", "生年月日")
@@ -100,6 +102,10 @@ def lambda_handler(event, context):
                     changes.append(f"{label}：{old_value} → {new_value}")
                 else:
                     NoChanges.append(f"{label}：{old_value}（変更なし）")
+            if old_phone != new_phone:
+                changes.append(f"電話番号：{old_phone} → {new_phone}")
+            else:
+                NoChanges.append(f"電話番号：{old_phone}（変更なし）")
             if not changes:
                 print(f"通知対象の変更はありません：{new_user_id}")
                 continue
@@ -109,6 +115,7 @@ def lambda_handler(event, context):
                 f"変更日時: {edited_at_str}\n"
                 "-----変更内容-----\n"
                 + "\n".join(changes)
+                + "\n"
                 + "\n".join(NoChanges)
             )
 
