@@ -48,6 +48,9 @@ def get_all_users():
             if break_count >= 100:
                 print(f"ユーザー数: {len(items)}")
                 break
+    for item in items:
+        if item.get("age") is not None:
+            item["age"] = int(item["age"])
     return items
 
 # -------------------------------
@@ -112,11 +115,13 @@ def lambda_handler(event, context):
     # 何らかのサーバーエラー
     # --------------------
     except Exception as e:
-        print("サーバーでエラーが発生しました")
+        import traceback
+        print(f"サーバーでエラーが発生しました: {e}")
+        traceback.print_exc()
         return {
             "statusCode": 500,
             "headers": {
-                "ACCess-Control-Allow-Origin": website_url
+                "Access-Control-Allow-Origin": website_url
             },
             "body": json.dumps({
                 "message": "サーバーエラーが発生しました"

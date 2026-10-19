@@ -39,6 +39,8 @@ paths:
                     birth:
                       type: string
                       format: data
+                    age:
+                      type: integer
 
         "400": # 一般的なクライアントエラー
           description: クライアントエラー
@@ -121,10 +123,13 @@ paths:
                 birth:
                   type: string
                   format: data
+                age:
+                  type: integer
               required:
                 - name
                 - email
                 - birth
+                - age
                 
       responses: # APIが返す結果の定義
         "201": # リクエストが正常に処理できた
@@ -224,6 +229,8 @@ paths:
                   birth:
                     type: string
                     format: data
+                  age:
+                    type: integer
 
         "400": # 一般的なクライアントエラー
           description: クライアントエラー
@@ -295,10 +302,13 @@ paths:
                 birth:
                   type: string
                   format: data
+                age:
+                  type: integer
               required:
                 - name
                 - email
                 - birth
+                - age
       responses: 
         "201": 
           description: ユーザーの更新を正常に処理

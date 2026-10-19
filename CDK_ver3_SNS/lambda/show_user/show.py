@@ -40,6 +40,7 @@ def pathParameters_id(event):
 def get_users(userID):
     response = table.get_item(Key={"userID":userID})
     item = response.get("Item")
+    item["age"] = int(item["age"])
     if not item:
         print(f"userID: {userID} の情報が見つかりません")
         return None

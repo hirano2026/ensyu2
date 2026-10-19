@@ -42,7 +42,7 @@ def parse_requestbody(event):
 #    登録情報の不備チェック  
 # --------------------------
 def check_request(requestbody):
-    required_data = ["name", "email", "birth"]
+    required_data = ["name", "email", "birth", "age"]
 
     for data in required_data:
         if data not in requestbody:
@@ -69,6 +69,7 @@ def new_users(requestbody, userID):
     if "phone" in requestbody:
         item["phone"] = requestbody["phone"]
     item["birth"] = requestbody["birth"]
+    item["age"] = requestbody["age"]
 
     print(f"ユーザー(userID:{userID})の情報を更新します")
     table.put_item(Item=item, ConditionExpression="attribute_exists(userID)")
