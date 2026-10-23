@@ -10,7 +10,7 @@ export class CdkDynamoDbConstruct extends Construct {
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
-        this.usersTable = new dynamodb.Table(this, 'usersTable', {
+        this.usersTable = new dynamodb.Table(this, 'usersTable', { // スタックのリソース欄の論理IDの名前になる
             ...DynamoDBConfig.usersTable,
         });
     }

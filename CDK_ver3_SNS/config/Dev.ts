@@ -117,6 +117,7 @@ interface S3_CONFIG {
         S3Props: {
             removalPolicy: cdk.RemovalPolicy;
             autoDeleteObjects: boolean;
+            bucketName: string;
         };
         blockPublicAccess: {
             blockPublicPolicy: boolean;
@@ -124,7 +125,6 @@ interface S3_CONFIG {
             ignorePublicAcls: boolean;
             restrictPublicBuckets: boolean;
         };
-        bucketName: string;
         assetsPath: string;
     };
 };
@@ -134,6 +134,7 @@ export const S3Config: S3_CONFIG = {
         S3Props: {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
+            bucketName: "ensyu2-S3bucket-20261005",
         },
         blockPublicAccess: {
             blockPublicPolicy: true,
@@ -141,7 +142,6 @@ export const S3Config: S3_CONFIG = {
             ignorePublicAcls: true,
             restrictPublicBuckets: true,
         },
-        bucketName: "ensyu2-S3bucket-20261005",
         assetsPath: "./assets",
     },
 };
